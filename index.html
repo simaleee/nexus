@@ -74,7 +74,7 @@ svg .needle{transition:transform .35s cubic-bezier(.2,.9,.2,1);transform-origin:
 <div id="micbtn" onclick="toggleVoice()" style="width:96px;height:96px;border-radius:50%;margin:8px auto;display:flex;align-items:center;justify-content:center;font-size:42px;cursor:pointer;background:var(--bg);box-shadow:6px 6px 14px var(--sh),-6px -6px 14px var(--lt);transition:.15s">🎤</div>
 <div id="vtext" class="sub" style="min-height:18px;font-weight:700">нажми и говори по-русски</div>
 <div class="sub" style="margin-top:8px;font-size:11px;line-height:1.5">«включи» · «выключи» · «поверни вправо» · «влево на 45 градусов» · «домой» · «статус»</div>
-<div class="row" style="margin-top:12px"><button class="b-blue" onclick="micTestESP()">🔬 Тест микрофона ESP</button></div>
+<div class="row" style="margin-top:12px"><button class="b-mint" onclick="listenESP()">🗣 Сказать на ESP</button><button class="b-blue" onclick="micTestESP()">🔬 Тест мик.</button></div>
 <div id="micres" class="logln" style="margin-top:8px;min-height:14px"></div></div>
 
 <div class="card" id="rcard"><div class="toggle">
@@ -180,6 +180,7 @@ function addSched(){const hm=(document.getElementById('sh').value||'00:00').spli
   logIt('программа добавлена');setTimeout(()=>client.publish(SCHED,JSON.stringify({op:'list'})),300);}
 function delSched(i){beep(440,.1);client.publish(SCHED,JSON.stringify({op:'del',i:i}));logIt('программа удалена');setTimeout(()=>client.publish(SCHED,JSON.stringify({op:'list'})),300);}
 function micTestESP(){beep(700,.1);const el=document.getElementById('micres');if(el)el.textContent='⏳ запись на ESP ~2.5с… скажи «включи» громко рядом с устройством';client.publish(SCHED,JSON.stringify({op:'mictest'}));}
+function listenESP(){beep(900,.1);const el=document.getElementById('micres');if(el)el.textContent='🎤 ESP слушает ~2с… скажи команду громко рядом с платой';client.publish(SCHED,JSON.stringify({op:'listen'}));}
 function pub(t,v){client.publish(CMD,JSON.stringify({t:t,v:v}));}
 function paintRelay(){document.getElementById('sw').className='sw'+(relay?' on':'');
 document.getElementById('ledG').setAttribute('fill',relay?'#57f0a8':'#1d3d2a');
