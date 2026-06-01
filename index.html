@@ -97,13 +97,21 @@ svg .needle{transition:transform .35s cubic-bezier(.2,.9,.2,1);transform-origin:
 <g id="ticks"></g>
 <line class="needle" id="ndl" x1="80" y1="80" x2="80" y2="24" stroke="#3eb98c" stroke-width="6" stroke-linecap="round"/>
 <circle cx="80" cy="80" r="9" fill="#3eb98c"/></svg>
-<div><div class="deg"><span id="deg">0</span>°</div><div class="sub">положение</div>
+<div><div class="deg"><span id="deg">0</span>°</div><div class="sub">положение <span id="mstat" style="color:var(--mint2);font-weight:700"></span></div>
 <div class="row" style="margin-top:10px"><button onclick="jog(-90)">◀ 90</button><button onclick="jog(90)">90 ▶</button></div>
 <div class="row" style="margin-top:10px"><button class="b-blue" onclick="home()">⌂ Домой 0°</button></div></div></div>
 <div class="lbl">По углу (°, + вправо / − влево)</div>
 <div class="row"><input id="ang" type="number" value="90"><button class="b-blue" onclick="byAngle()">Повернуть</button></div>
 <div class="lbl">По времени (сек, знак = сторона)</div>
 <div class="row"><input id="sec" type="number" value="3"><button class="b-blue" onclick="byTime()">Крутить</button></div></div>
+
+<div class="card"><div class="lbl" style="margin-top:0">Расписание — программы по времени</div>
+<div id="slist"></div>
+<div class="lbl">Новая программа</div>
+<div class="row"><input id="sh" type="time" value="07:00" style="flex:1.1">
+<select id="stype" style="flex:1.6;font-size:14px;padding:13px;border-radius:16px;color:var(--ink);background:var(--bg);border:0;box-shadow:inset 4px 4px 9px var(--sh),inset -4px -4px 9px var(--lt)">
+<option value="0">реле ВКЛ</option><option value="1">реле ВЫКЛ</option><option value="2">реле импульс (с)</option><option value="3">мотор угол (°)</option><option value="4">мотор время (с)</option></select></div>
+<div class="row" style="margin-top:10px"><input id="sval" type="number" value="0" placeholder="значение"><button class="b-mint" onclick="addSched()">＋ Добавить</button></div></div>
 
 <div class="card"><div class="lbl" style="margin-top:0">Журнал</div>
 <div id="log" class="logln">—</div></div>
@@ -137,14 +145,31 @@ let tk='';for(let i=0;i<24;i++){let a=i*15*Math.PI/180,l=i%6==0?12:7;tk+=`<line 
 document.getElementById('ticks').innerHTML=tk;
 
 /* ---------- MQTT ---------- */
-const TOPIC='simalee_ctrl_x7k9',CMD=TOPIC+'/cmd',STAT=TOPIC+'/status',SPR=2048;
+const TOPIC='simalee_ctrl_x7k9',CMD=TOPIC+'/cmd',STAT=TOPIC+'/status',SCHED=TOPIC+'/sched',SLIST=TOPIC+'/slist',SPR=2048;
+const TYPES=['реле ВКЛ','реле ВЫКЛ','реле имп.(с)','мотор угол(°)','мотор время(с)'];
 let pos=0,relay=false;
 function logIt(s){const el=document.getElementById('log');const t=new Date().toLocaleTimeString('ru-RU');el.textContent=t+'  '+s;}
-const client=mqtt.connect('wss://broker.emqx.io:8084/mqtt',{clientId:'sim-'+Math.random().toString(16).slice(2,8),keepalive:30});
-client.on('connect',()=>{setC(true);client.subscribe(STAT);logIt('подключено к брокеру');});
+const client=mqtt.connect('wss://broker.emqx.io:8084/mqtt',{clientId:'sim-'+Math.random().toString(16).slice(2,8),keepalive:45,reconnectPeriod:2000});
+client.on('connect',()=>{setC(true);client.subscribe(STAT);client.subscribe(SLIST);client.publish(SCHED,JSON.stringify({op:'list'}));logIt('подключено к брокеру');});
 client.on('reconnect',()=>setC(false));client.on('close',()=>setC(false));client.on('error',()=>setC(false));
-client.on('message',(t,m)=>{try{const d=JSON.parse(m.toString());if('relay'in d){const nr=!!d.relay;if(nr!==relay){relay=nr;paintRelay();beep(nr?1320:660,.16);logIt('реле → '+(nr?'ВКЛ':'ВЫКЛ'));}}}catch(e){}});
-function setC(ok){document.getElementById('dot').className='dot'+(ok?' on':'');document.getElementById('st').textContent=ok?'на связи':'нет связи';}
+client.on('message',(t,m)=>{try{const d=JSON.parse(m.toString());
+  if(t===SLIST){renderSched(d);return;}
+  if('relay'in d){const nr=!!d.relay;if(nr!==relay){relay=nr;paintRelay();beep(nr?1320:660,.16);logIt('реле → '+(nr?'ВКЛ':'ВЫКЛ'));}}
+  if('mbusy'in d){setBusy(!!d.mbusy);}
+  if('mdeg'in d){logIt('мотор: '+(d.mdeg>0?'+':'')+d.mdeg+'° ✓');}
+}catch(e){}});
+let cTimer=null;
+function setC(ok){if(ok){if(cTimer){clearTimeout(cTimer);cTimer=null;}paintC(true);}else if(!cTimer){cTimer=setTimeout(()=>{paintC(false);cTimer=null;},3500);}}
+function paintC(ok){document.getElementById('dot').className='dot'+(ok?' on':'');document.getElementById('st').textContent=ok?'на связи':'нет связи';}
+function setBusy(b){document.getElementById('mstat').textContent=b?'· крутится…':'';document.getElementById('ndl').setAttribute('stroke',b?'#ffae57':'#3eb98c');}
+function renderSched(arr){const el=document.getElementById('slist');if(!arr||!arr.length){el.innerHTML='<div class="sub" style="padding:6px 0">пока пусто — добавь программу ниже</div>';return;}
+  let h='';for(const s of arr){const hm=String(s.h).padStart(2,'0')+':'+String(s.m).padStart(2,'0');
+    h+='<div style="display:flex;align-items:center;gap:10px;padding:9px 0;border-bottom:1px solid var(--sh)"><b style="color:var(--mint2);font-size:16px">'+hm+'</b><span style="flex:1">'+(TYPES[s.t]||'?')+((s.v||s.t>=2)?' '+s.v:'')+'</span><button class="b-rd" style="flex:none;padding:9px 13px" onclick="delSched('+s.i+')">✕</button></div>';}
+  el.innerHTML=h;}
+function addSched(){const hm=(document.getElementById('sh').value||'00:00').split(':');beep(880,.1);
+  client.publish(SCHED,JSON.stringify({op:'add',hh:+hm[0],mm:+hm[1],type:+document.getElementById('stype').value,val:+document.getElementById('sval').value||0}));
+  logIt('программа добавлена');setTimeout(()=>client.publish(SCHED,JSON.stringify({op:'list'})),300);}
+function delSched(i){beep(440,.1);client.publish(SCHED,JSON.stringify({op:'del',i:i}));logIt('программа удалена');setTimeout(()=>client.publish(SCHED,JSON.stringify({op:'list'})),300);}
 function pub(t,v){client.publish(CMD,JSON.stringify({t:t,v:v}));}
 function paintRelay(){document.getElementById('sw').className='sw'+(relay?' on':'');
 document.getElementById('ledG').setAttribute('fill',relay?'#57f0a8':'#1d3d2a');
