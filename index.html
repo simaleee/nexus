@@ -130,11 +130,11 @@ function toggleTheme(){const cur=document.documentElement.getAttribute('data-the
 const PIN='0022';let buf='';
 function drawPins(){const d=document.getElementById('pin').children;for(let i=0;i<4;i++)d[i].className='pd'+(i<buf.length?' f':'');}
 function kp(n){beep(820,.05);if(n==='<'){buf=buf.slice(0,-1);}else if(buf.length<4){buf+=n;}drawPins();
-  if(buf.length===4){setTimeout(()=>{if(buf===PIN){try{sessionStorage.setItem('auth','1')}catch(e){}; enterApp();}else{document.getElementById('perr').textContent='Неверный код';beep(200,.2);buf='';drawPins();}},120);}}
+  if(buf.length===4){setTimeout(()=>{if(buf===PIN){try{localStorage.setItem('auth','1')}catch(e){}; enterApp();}else{document.getElementById('perr').textContent='Неверный код';beep(200,.2);buf='';drawPins();}},120);}}
 (function(){const k=document.getElementById('keys');['1','2','3','4','5','6','7','8','9','','0','<'].forEach(n=>{const e=document.createElement('div');if(n===''){e.style.visibility='hidden';e.className='key';}else{e.className='key';e.textContent=n==='<'?'⌫':n;e.onclick=()=>kp(n);}k.appendChild(e);});})();
 function enterApp(){document.getElementById('login').style.display='none';document.getElementById('app').style.display='block';beep(1100,.12);}
-function logout(){try{sessionStorage.removeItem('auth')}catch(e){};location.reload();}
-(function(){let a='';try{a=sessionStorage.getItem('auth')||''}catch(e){}; if(a==='1'){document.getElementById('login').style.display='none';document.getElementById('app').style.display='block';}})();
+function logout(){try{localStorage.removeItem('auth')}catch(e){};location.reload();}
+(function(){let a='';try{a=localStorage.getItem('auth')||''}catch(e){}; if(a==='1'){document.getElementById('login').style.display='none';document.getElementById('app').style.display='block';}})();
 
 /* ---------- AUDIO ---------- */
 let ac;
