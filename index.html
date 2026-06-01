@@ -73,7 +73,9 @@ svg .needle{transition:transform .35s cubic-bezier(.2,.9,.2,1);transform-origin:
 <div class="lbl" style="margin-top:0">🎙 Голосовое управление</div>
 <div id="micbtn" onclick="toggleVoice()" style="width:96px;height:96px;border-radius:50%;margin:8px auto;display:flex;align-items:center;justify-content:center;font-size:42px;cursor:pointer;background:var(--bg);box-shadow:6px 6px 14px var(--sh),-6px -6px 14px var(--lt);transition:.15s">🎤</div>
 <div id="vtext" class="sub" style="min-height:18px;font-weight:700">нажми и говори по-русски</div>
-<div class="sub" style="margin-top:8px;font-size:11px;line-height:1.5">«включи» · «выключи» · «поверни вправо» · «влево на 45 градусов» · «домой» · «статус»</div></div>
+<div class="sub" style="margin-top:8px;font-size:11px;line-height:1.5">«включи» · «выключи» · «поверни вправо» · «влево на 45 градусов» · «домой» · «статус»</div>
+<div class="row" style="margin-top:12px"><button class="b-blue" onclick="micTestESP()">🔬 Тест микрофона ESP</button></div>
+<div id="micres" class="logln" style="margin-top:8px;min-height:14px"></div></div>
 
 <div class="card" id="rcard"><div class="toggle">
 <svg width="168" height="116" viewBox="0 0 228 150">
@@ -160,6 +162,7 @@ client.on('connect',()=>{setC(true);client.subscribe(STAT);client.subscribe(SLIS
 client.on('reconnect',()=>setC(false));client.on('close',()=>setC(false));client.on('error',()=>setC(false));
 client.on('message',(t,m)=>{try{const d=JSON.parse(m.toString());
   if(t===SLIST){renderSched(d);return;}
+  if('mic'in d){const el=document.getElementById('micres');if(el)el.textContent='🔬 ESP: '+d.mic;logIt('мик ESP: '+d.mic);speak('тест готов');}
   if('relay'in d){const nr=!!d.relay;if(nr!==relay){relay=nr;paintRelay();beep(nr?1320:660,.16);logIt('реле → '+(nr?'ВКЛ':'ВЫКЛ'));}}
   if('mbusy'in d){setBusy(!!d.mbusy);}
   if('mdeg'in d){logIt('мотор: '+(d.mdeg>0?'+':'')+d.mdeg+'° ✓');}
@@ -176,6 +179,7 @@ function addSched(){const hm=(document.getElementById('sh').value||'00:00').spli
   client.publish(SCHED,JSON.stringify({op:'add',hh:+hm[0],mm:+hm[1],type:+document.getElementById('stype').value,val:+document.getElementById('sval').value||0}));
   logIt('программа добавлена');setTimeout(()=>client.publish(SCHED,JSON.stringify({op:'list'})),300);}
 function delSched(i){beep(440,.1);client.publish(SCHED,JSON.stringify({op:'del',i:i}));logIt('программа удалена');setTimeout(()=>client.publish(SCHED,JSON.stringify({op:'list'})),300);}
+function micTestESP(){beep(700,.1);const el=document.getElementById('micres');if(el)el.textContent='⏳ запись на ESP ~2.5с… скажи «включи» громко рядом с устройством';client.publish(SCHED,JSON.stringify({op:'mictest'}));}
 function pub(t,v){client.publish(CMD,JSON.stringify({t:t,v:v}));}
 function paintRelay(){document.getElementById('sw').className='sw'+(relay?' on':'');
 document.getElementById('ledG').setAttribute('fill',relay?'#57f0a8':'#1d3d2a');
