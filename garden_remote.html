@@ -4,7 +4,7 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1">
 <title>🌱 Сад — пульт</title>
-<script src="https://unpkg.com/mqtt/dist/mqtt.min.js"></script>
+<script src="mqtt.min.js"></script>
 <style>
 :root{--bg:#0e1512;--card:#16201c;--ink:#e9fff6;--muted:#8fb3a6;--cyan:#18c7bf;--mint:#83e8cb;--red:#e86666;--amber:#ffc66d;--line:rgba(120,200,180,.16)}
 *{box-sizing:border-box;-webkit-tap-highlight-color:transparent}
@@ -86,7 +86,7 @@ h1{font-size:20px;text-align:center;margin:6px 0 2px;letter-spacing:.5px}
 
 <script>
 // ===== НАСТРОЙКИ (совпадают с прошивкой) =====
-var BROKER = 'wss://broker.emqx.io:8084/mqtt';
+var BROKER = 'wss://mqtt.eclipseprojects.io:443/mqtt';
 var T_STAT  = 'simalee_garden_a7/status';
 var T_CMD   = 'simalee_garden_a7/cmd';
 var T_EVENT = 'simalee_garden_a7/event';
