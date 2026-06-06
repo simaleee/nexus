@@ -147,8 +147,8 @@ body:before{content:'';position:fixed;inset:0;background:linear-gradient(90deg,t
   <div class="dev-btn" id="d_fill" data-target="fill"><div><div class="name">Клапан налива</div><div class="pin">GPIO 7</div></div><div class="state" id="ds_fill">OFF</div></div>
   <div class="dev-section">Датчики уровня</div>
   <div class="sensors">
-    <div class="sensor">НИЖНИЙ (GPIO15)<div class="v" id="sLow">—</div></div>
-    <div class="sensor">ВЕРХНИЙ (GPIO16)<div class="v" id="sFull">—</div></div>
+    <div class="sensor">НИЖНИЙ (GPIO15)<div class="v" id="sLow">—</div><div id="rLow" style="font-size:10px;color:var(--muted);margin-top:4px">контакт: —</div></div>
+    <div class="sensor">ВЕРХНИЙ (GPIO16)<div class="v" id="sFull">—</div><div id="rFull" style="font-size:10px;color:var(--muted);margin-top:4px">контакт: —</div></div>
   </div>
   <div class="switch"><span>Датчик влажности <small>GPIO 1</small></span><div id="soilOn" class="toggle"></div></div>
   <div class="moisture-box" id="soilBox">
@@ -226,8 +226,10 @@ function render(d){
   for(var i=0;i<k.length;i++){ var on=d.dev&&d.dev[k[i]]; var el=$('d_'+k[i]),s2=$('ds_'+k[i]); if(el)el.classList.toggle('on',!!on); if(s2)s2.innerText=on?'ON':'OFF'; }
   /* датчики */
   var sl=$('sLow'),sf=$('sFull');
-  if(sl){ sl.innerText=d.sensorLow?'ПУСТО':'OK'; sl.className='v '+(d.sensorLow?'bad':'ok'); }
-  if(sf){ sf.innerText=d.sensorFull?'ПОЛНЫЙ':'—'; sf.className='v '+(d.sensorFull?'ok':''); }
+  if(sl){ sl.innerText=d.sensorLow?'ПУСТО':'ВОДА ЕСТЬ'; sl.className='v '+(d.sensorLow?'bad':'ok'); }
+  if(sf){ sf.innerText=d.sensorFull?'ПОЛНЫЙ':'НЕ ПОЛНЫЙ'; sf.className='v '+(d.sensorFull?'ok':''); }
+  if($('rLow'))  $('rLow').innerText='контакт: '+(d.rawLow?'замкнут (LOW)':'разомкнут (HIGH)');
+  if($('rFull')) $('rFull').innerText='контакт: '+(d.rawFull?'замкнут (LOW)':'разомкнут (HIGH)');
   if($('rainBlock')) $('rainBlock').classList.toggle('active',!!d.blockOnRain);
   if(d.soil){ $('soilOn').classList.toggle('active',!!d.soil.enabled); $('soilVal').innerText=d.soil.enabled?((d.soil.wet?'ВЛАЖНО':'СУХО')+' · '+d.soil.raw):'выкл'; }
   /* погода */
