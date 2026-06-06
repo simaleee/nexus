@@ -1,182 +1,277 @@
-<!DOCTYPE html>
-<html lang="ru">
-<head>
-<meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1">
-<title>🌱 Сад — пульт</title>
+<!DOCTYPE html><html lang="ru"><head><meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>🌱 AppleGarden — пульт</title>
 <script src="mqtt.min.js"></script>
 <style>
-:root{--bg:#0e1512;--card:#16201c;--ink:#e9fff6;--muted:#8fb3a6;--cyan:#18c7bf;--mint:#83e8cb;--red:#e86666;--amber:#ffc66d;--line:rgba(120,200,180,.16)}
+:root{--bg:#edf3f0;--ink:#213037;--muted:rgba(33,48,55,.56);--line:rgba(62,86,94,.18);--cyan:#18c7bf;--mint:#83e8cb;--amber:#ffc66d;--orange:#f29b45;--red:#e86666;--panel:rgba(246,250,248,.78)}
 *{box-sizing:border-box;-webkit-tap-highlight-color:transparent}
-body{font-family:system-ui,-apple-system,Segoe UI,Roboto,sans-serif;background:radial-gradient(circle at 20% 0%,rgba(24,199,191,.12),transparent 40%),var(--bg);color:var(--ink);margin:0;padding:16px;max-width:440px;margin:auto;min-height:100vh}
-h1{font-size:20px;text-align:center;margin:6px 0 2px;letter-spacing:.5px}
-.sub{text-align:center;color:var(--muted);font-size:12px;margin-bottom:14px}
-.conn{display:inline-block;width:9px;height:9px;border-radius:50%;background:var(--red);margin-right:6px;vertical-align:middle}
-.conn.ok{background:var(--mint);box-shadow:0 0 10px var(--mint)}
-.card{background:linear-gradient(160deg,var(--card),#101815);border:1px solid var(--line);border-radius:20px;padding:18px;margin:12px 0;box-shadow:0 12px 30px rgba(0,0,0,.35)}
-.state{font-size:24px;font-weight:800;text-align:center;color:var(--mint)}
-.state.run{color:var(--mint)}.state.fill{color:var(--cyan)}.state.low{color:var(--red)}.state.idle{color:var(--ink)}
-.sub2{text-align:center;color:var(--muted);font-size:13px;margin-top:6px;min-height:18px}
-.grid{display:grid;grid-template-columns:repeat(2,1fr);gap:10px;margin-top:10px}
-.metric{background:rgba(255,255,255,.03);border:1px solid var(--line);border-radius:14px;padding:10px;text-align:center}
-.metric .l{font-size:11px;color:var(--muted)}.metric .v{font-size:16px;font-weight:700;margin-top:3px}
-.times{display:grid;grid-template-columns:repeat(4,1fr);gap:8px;margin:8px 0}
-.tbtn{height:50px;border-radius:14px;background:rgba(255,255,255,.05);border:1px solid var(--line);color:var(--ink);font-size:18px;font-weight:800;cursor:pointer}
-.tbtn.active{background:linear-gradient(145deg,var(--cyan),var(--mint));color:#062019;border:0}
-.sw{display:flex;justify-content:space-between;align-items:center;padding:12px 4px;font-size:16px}
-.tog{width:60px;height:32px;border-radius:10px;background:#26312c;border:1px solid var(--line);position:relative;cursor:pointer;transition:.2s}
-.tog.on{background:linear-gradient(135deg,var(--cyan),var(--mint))}
-.tog::after{content:'';position:absolute;width:24px;height:24px;border-radius:8px;background:#cfe;top:3px;left:4px;transition:.2s}
-.tog.on::after{left:32px}
-.btn{width:100%;height:64px;border:0;border-radius:18px;font-size:20px;font-weight:900;cursor:pointer;margin-top:8px;color:#062019}
-.start{background:linear-gradient(135deg,var(--cyan),var(--mint))}
-.stop{background:linear-gradient(135deg,#ff7a62,var(--red));color:#fff}
-.fill{background:linear-gradient(135deg,var(--amber),#f29b45);color:#3a2400;height:52px;font-size:17px}
-.btn:active,.tbtn:active,.fill:active{transform:scale(.98)}
-.log{font-family:monospace;font-size:11px;color:var(--muted);background:rgba(0,0,0,.3);border-radius:12px;padding:10px;height:90px;overflow-y:auto;margin-top:8px}
-.muteRow{display:flex;align-items:center;gap:8px;justify-content:center;color:var(--muted);font-size:13px;margin-top:6px}
-.pin{width:100%;padding:16px;font-size:26px;text-align:center;letter-spacing:8px;background:rgba(255,255,255,.05);border:1px solid var(--line);border-radius:14px;color:var(--ink);outline:none}
-.lbtn{width:100%;height:54px;border:0;border-radius:14px;font-size:17px;font-weight:800;margin-top:12px;color:#062019;background:linear-gradient(135deg,var(--cyan),var(--mint));cursor:pointer}
-.err{color:var(--red);text-align:center;font-size:13px;min-height:18px;margin-top:8px}
-.exit{float:right;font-size:12px;color:var(--muted);cursor:pointer}
-</style>
-</head>
+html{min-height:100%;background:#edf3f0}
+body{font-family:Inter,system-ui,sans-serif;background:radial-gradient(circle at 18% 18%,rgba(24,199,191,.16),transparent 32%),radial-gradient(circle at 84% 88%,rgba(120,150,160,.16),transparent 34%),linear-gradient(145deg,#dbe6e9 0,#edf4f2 48%,#c9d6d9 100%);color:var(--ink);display:flex;justify-content:center;align-items:center;min-height:100vh;margin:0;padding:16px}
+body:before{content:'';position:fixed;inset:0;background:linear-gradient(90deg,transparent 0 49%,rgba(24,199,191,.08) 50%,transparent 51%),repeating-linear-gradient(0deg,rgba(24,40,48,.035) 0 1px,transparent 1px 24px);pointer-events:none}
+.card{width:100%;max-width:390px;padding:24px 22px 24px;border-radius:30px;background:linear-gradient(155deg,rgba(252,255,254,.90),rgba(225,235,233,.82));border:1px solid rgba(52,78,86,.20);box-shadow:0 26px 54px rgba(37,53,58,.32),inset 0 1px 0 rgba(255,255,255,.96),0 0 0 1px rgba(255,255,255,.52),0 0 34px rgba(24,199,191,.10);backdrop-filter:blur(18px);-webkit-backdrop-filter:blur(18px);position:relative;overflow:hidden}
+.card:before{content:'';position:absolute;left:18px;right:18px;top:14px;height:1px;background:rgba(255,255,255,.85)}
+.card:after{content:'';position:absolute;left:0;right:0;bottom:0;height:5px;background:linear-gradient(90deg,transparent,rgba(24,199,191,.45),transparent);opacity:.75}
+.card>*{position:relative}
+.header{text-align:left;margin:0 0 20px;position:relative;padding-top:18px}
+.time{font-size:42px;font-weight:800;line-height:1;color:#46525a;text-shadow:0 1px 0 rgba(255,255,255,.85)}
+.city{font-size:13px;color:var(--muted);margin-top:8px}
+.weather{display:inline-flex;align-items:center;gap:7px;margin-top:14px;font-size:14px;color:rgba(33,48,55,.78);flex-wrap:wrap;background:rgba(255,255,255,.58);border:1px solid rgba(24,199,191,.18);border-radius:17px;padding:9px 12px;box-shadow:inset 0 1px 0 rgba(255,255,255,.74)}
+.weather .t{font-size:20px;font-weight:800;color:#159d99}
+.gear{position:absolute;right:2px;top:26px;width:42px;height:42px;background:linear-gradient(145deg,rgba(255,255,255,.92),rgba(220,235,231,.82));color:#168f8b;border:1px solid rgba(24,199,191,.24);border-radius:50%;display:flex;align-items:center;justify-content:center;cursor:pointer;font-size:17px;box-shadow:0 0 20px rgba(24,199,191,.22),inset 0 1px 0 rgba(255,255,255,.80)}
+.gear:active,.time-btn:active,.main-btn:active,.dev-btn:active,.login-btn:active,.save-btn:active{transform:scale(0.98)}
+.status{text-align:center;margin:22px 0 16px;font-size:17px;font-weight:800;color:#168f8b;min-height:24px;padding:14px 10px;border-radius:20px;background:linear-gradient(135deg,rgba(255,255,255,.68),rgba(232,247,244,.68));border:1px solid rgba(24,199,191,.24);box-shadow:0 10px 22px rgba(37,53,58,.08),inset 0 1px 0 rgba(255,255,255,.82)}
+.next-run{text-align:center;margin:-6px 0 14px;font-size:12px;color:var(--muted);min-height:18px}
+.times{display:grid;grid-template-columns:repeat(4,1fr);gap:9px;margin:14px 0 22px}
+.time-btn{height:54px;border-radius:17px;background:linear-gradient(145deg,rgba(255,255,255,.88),rgba(219,230,227,.76));color:#5b666b;display:flex;align-items:center;justify-content:center;cursor:pointer;font-size:20px;font-weight:800;border:1px solid rgba(52,78,86,.14);box-shadow:0 9px 18px rgba(37,53,58,.12),inset 0 1px 0 rgba(255,255,255,.78)}
+.time-btn.active{background:linear-gradient(145deg,var(--cyan),var(--mint));color:#06201e;box-shadow:0 0 24px rgba(24,199,191,.42),inset 0 1px 0 rgba(255,255,255,.62)}
+.switch{display:flex;justify-content:space-between;align-items:center;margin:12px 0;padding:15px 14px;border-radius:20px;background:rgba(255,255,255,.62);border:1px solid rgba(52,78,86,.13);font-size:18px;color:rgba(33,48,55,.92);box-shadow:0 8px 18px rgba(37,53,58,.10),inset 0 1px 0 rgba(255,255,255,.78)}
+.toggle{width:68px;height:34px;background:linear-gradient(145deg,#d7e0de,#f5f9f8);border:1px solid rgba(52,78,86,.18);border-radius:10px;position:relative;cursor:pointer;transition:.25s;flex-shrink:0;box-shadow:inset 0 2px 5px rgba(70,90,96,.18),0 5px 12px rgba(37,53,58,.12)}
+.toggle::before{content:'OFF';position:absolute;right:8px;top:9px;font-size:9px;font-weight:800;color:rgba(33,48,55,.45)}
+.toggle::after{content:'';position:absolute;width:25px;height:25px;background:linear-gradient(145deg,#fbf8f1,#c5b8a4);border-radius:8px;top:4px;left:5px;transition:.25s;box-shadow:0 5px 12px rgba(37,53,58,.28),inset 0 1px 0 rgba(255,255,255,.75)}
+.toggle.active{background:linear-gradient(135deg,rgba(24,199,191,.90),rgba(131,232,203,.78));box-shadow:0 0 18px rgba(24,199,191,.28)}
+.toggle.active::before{content:'ON';left:9px;right:auto;color:rgba(6,32,30,.58)}
+.toggle.active::after{left:37px;background:linear-gradient(145deg,#e5fff3,#69d6ae)}
+.main-btn{width:100%;height:78px;border:none;border-radius:23px;font-size:24px;font-weight:900;margin-top:26px;cursor:pointer;letter-spacing:1px;color:#fff;font-family:inherit;box-shadow:inset 0 1px 0 rgba(255,255,255,.32)}
+.start{background:linear-gradient(135deg,var(--cyan),var(--mint));color:#081f1d;box-shadow:0 0 28px rgba(66,242,232,.42),inset 0 1px 0 rgba(255,255,255,.45)}
+.stop{background:linear-gradient(135deg,#ff7a62,var(--red));color:#fff;box-shadow:0 0 30px rgba(255,98,98,.40),inset 0 1px 0 rgba(255,255,255,.28)}
+.conn{font-size:15px;text-align:center;color:#168f8b;margin-top:20px}
+.login-box{text-align:center}
+.login-box h2{margin:40px 0 8px 0;font-weight:800;font-size:22px}
+.ver{font-size:11px;color:var(--muted);margin-bottom:22px}
+.pin-input{width:100%;padding:17px 14px;font-size:26px;text-align:center;background:rgba(255,255,255,.64);border:1px solid rgba(24,199,191,.20);border-radius:18px;color:#213037;letter-spacing:8px;outline:none;font-family:inherit}
+.pin-input:focus{border-color:rgba(24,199,191,.70);box-shadow:0 0 22px rgba(24,199,191,.14)}
+.err{color:#d9534f;margin-top:12px;font-size:13px;min-height:18px}
+.login-btn,.save-btn{width:100%;padding:16px;background:linear-gradient(135deg,var(--cyan),var(--mint));color:#081f1d;border:none;border-radius:18px;font-weight:900;font-size:15px;margin-top:13px;cursor:pointer;font-family:inherit}
+.dev-back{display:inline-block;padding:8px 14px;background:rgba(255,255,255,.64);border:1px solid rgba(52,78,86,.13);border-radius:14px;font-size:13px;cursor:pointer;margin:18px 0 16px;box-shadow:0 7px 16px rgba(37,53,58,.10)}
+.dev-title{font-size:18px;font-weight:800;margin-bottom:16px;color:#168f8b}
+.dev-section{font-size:11px;text-transform:uppercase;color:var(--muted);margin:20px 0 9px 0;letter-spacing:1px}
+.dev-btn{display:flex;justify-content:space-between;align-items:center;padding:14px 16px;background:linear-gradient(145deg,rgba(255,255,255,.76),rgba(218,229,227,.78));border:1px solid rgba(52,78,86,.15);border-radius:18px;margin-bottom:9px;cursor:pointer;box-shadow:0 9px 18px rgba(37,53,58,.12),inset 0 1px 0 rgba(255,255,255,.86)}
+.dev-btn.on{background:linear-gradient(135deg,var(--cyan),var(--mint));color:#071e1c;box-shadow:0 0 20px rgba(66,242,232,.26)}
+.dev-btn .name{font-weight:800;font-size:14px}
+.dev-btn .pin{font-size:11px;opacity:0.62}
+.dev-btn .state{min-width:45px;text-align:center;font-size:11px;font-weight:900;padding:8px 8px;background:linear-gradient(145deg,#d7e0de,#f5f9f8);border:1px solid rgba(52,78,86,.18);border-radius:8px;color:#5b666b;box-shadow:inset 0 2px 5px rgba(70,90,96,.16)}
+.dev-btn.on .state{background:linear-gradient(135deg,var(--cyan),var(--mint));color:#06201e}
+.sensors{display:flex;gap:10px;margin:15px 0}
+.sensor{flex:1;padding:12px;background:rgba(255,255,255,.62);border:1px solid rgba(52,78,86,.13);border-radius:16px;text-align:center;font-size:12px;box-shadow:0 8px 18px rgba(37,53,58,.10)}
+.sensor .v{font-size:14px;font-weight:800;margin-top:5px}
+.sensor .v.ok{color:#1f9d63}.sensor .v.bad{color:#d9534f}
+.moisture-box{display:grid;grid-template-columns:1fr auto;gap:8px;align-items:center;padding:13px;background:rgba(255,255,255,.62);border:1px solid rgba(52,78,86,.13);border-radius:18px;box-shadow:0 8px 18px rgba(37,53,58,.10);font-size:13px}
+.moisture-box b{display:block;font-size:14px;color:#213037}
+.moisture-box span{color:var(--muted);font-size:12px}
+.moisture-box .v{font-weight:900;color:#168f8b}
+.wifi-status{padding:13px;background:rgba(255,255,255,.62);border:1px solid rgba(52,78,86,.13);border-radius:16px;margin-bottom:10px;font-size:12px;text-align:center;line-height:1.6;white-space:pre-line;box-shadow:0 8px 18px rgba(37,53,58,.10)}
+.wifi-status.ok{color:#1f9d63}.wifi-status.bad{color:#d9534f}
+.refresh-btn{margin-left:8px;padding:5px 9px;background:rgba(255,199,111,.28);border:1px solid rgba(242,155,69,.25);color:#8b6128;border-radius:10px;font-size:11px;cursor:pointer;font-family:inherit}
+.field{display:flex;flex-direction:column;margin-bottom:10px}
+.field label{font-size:12px;color:var(--muted);margin-bottom:6px}
+.field input{padding:13px;background:rgba(255,255,255,.64);border:1px solid rgba(24,199,191,.16);border-radius:15px;color:#213037;font-family:inherit;font-size:14px;outline:none}
+.sched-grid{display:grid;grid-template-columns:1fr 92px;gap:10px}
+.sched-days{display:grid;grid-template-columns:repeat(7,1fr);gap:6px;margin:10px 0 12px}
+.sched-days button{height:34px;border:1px solid rgba(52,78,86,.13);border-radius:12px;background:rgba(255,255,255,.62);color:var(--muted);font-family:inherit;font-size:11px;font-weight:800;cursor:pointer}
+.sched-days button.on{background:linear-gradient(135deg,var(--cyan),var(--mint));color:#071e1c}
+#log{background:rgba(33,48,55,.86);color:#9ff6cf;font-family:monospace;font-size:10px;padding:12px;border-radius:16px;height:120px;overflow-y:auto;margin-top:10px;text-align:left;line-height:1.45}
+.system-viz{height:58px;margin:0 0 12px;display:grid;grid-template-columns:54px 1fr 54px;align-items:center;gap:10px;opacity:.82}
+.viz-node{width:48px;height:48px;border-radius:18px;background:rgba(255,255,255,.62);border:1px solid rgba(52,78,86,.13);position:relative;box-shadow:0 8px 18px rgba(37,53,58,.10),inset 0 1px 0 rgba(255,255,255,.78)}
+.viz-node:before{content:'';position:absolute;inset:13px;border-radius:50%;background:rgba(24,199,191,.12)}
+.pump:after{content:'';position:absolute;inset:9px;border-radius:50%;border:4px solid rgba(66,242,232,.22);border-top-color:var(--cyan)}
+.tank{overflow:hidden}
+.tank:after{content:'';position:absolute;left:8px;right:8px;bottom:8px;height:7px;border-radius:8px;background:linear-gradient(90deg,var(--cyan),var(--mint));transition:height .5s}
+.viz-line{height:8px;border-radius:99px;background:rgba(52,78,86,.10);overflow:hidden;position:relative}
+.viz-line:after{content:'';position:absolute;inset:0;width:34%;border-radius:99px;background:linear-gradient(90deg,transparent,var(--cyan),var(--mint),transparent);opacity:0}
+.state-running .pump:after{animation:spin 1s linear infinite}
+.state-running .viz-line:after{opacity:1;animation:flow 1.1s linear infinite}
+.state-filling .tank:after{height:30px;animation:fillPulse 1.4s ease-in-out infinite}
+.state-filling .viz-line:after{opacity:1;animation:flow 1.8s linear infinite reverse;background:linear-gradient(90deg,transparent,var(--amber),var(--cyan),transparent)}
+.state-low .tank:after{height:4px;background:var(--red)}
+@keyframes spin{to{transform:rotate(360deg)}}
+@keyframes flow{from{transform:translateX(-120%)}to{transform:translateX(320%)}}
+@keyframes fillPulse{50%{box-shadow:0 0 26px rgba(66,242,232,.62)}}
+.dot{display:inline-block;width:9px;height:9px;border-radius:50%;background:var(--red);margin-right:6px;vertical-align:middle}
+.dot.ok{background:#2bd49a;box-shadow:0 0 8px #2bd49a}
+</style></head>
 <body>
-<h1>🌱 Сад — удалённый пульт</h1>
-<div class="sub"><span class="conn" id="conn"></span><span id="connTxt">подключение к брокеру…</span></div>
 
-<!-- ЭКРАН ВХОДА -->
-<div class="card" id="login">
-  <div style="text-align:center;font-weight:800;font-size:18px;margin-bottom:4px">🔒 Вход</div>
-  <div style="text-align:center;color:var(--muted);font-size:12px;margin-bottom:14px">введите PIN управления</div>
-  <input class="pin" id="pinInput" type="password" inputmode="numeric" maxlength="8" placeholder="••••">
-  <button class="lbtn" id="loginBtn">ВОЙТИ</button>
-  <div class="err" id="loginErr"></div>
-</div>
-
-<!-- ОСНОВНОЙ ПУЛЬТ -->
-<div id="app" style="display:none">
-<div class="card">
-  <div class="exit" id="exitBtn">выйти</div>
-  <div class="state idle" id="state">—</div>
-  <div class="sub2" id="sub2">ожидание данных…</div>
-  <div class="grid">
-    <div class="metric"><div class="l">Бочка</div><div class="v" id="mTank">—</div></div>
-    <div class="metric"><div class="l">Осталось</div><div class="v" id="mRem">—</div></div>
-    <div class="metric"><div class="l">Погода</div><div class="v" id="mTemp">—</div></div>
-    <div class="metric"><div class="l">IP в доме</div><div class="v" id="mIp" style="font-size:13px">—</div></div>
+<!-- ВХОД -->
+<div class="card" id="loginScreen">
+  <div class="login-box">
+    <h2>🌱 AppleGarden 💧</h2>
+    <div class="ver" id="connTxt"><span class="dot" id="dot"></span>удалённый пульт</div>
+    <input type="password" id="pinInput" class="pin-input" maxlength="8" placeholder="••••" inputmode="numeric">
+    <button id="loginBtn" class="login-btn">ВОЙТИ</button>
+    <div class="err" id="loginErr"></div>
   </div>
 </div>
 
-<div class="card">
+<!-- ГЛАВНЫЙ -->
+<div class="card" id="mainScreen" style="display:none">
+  <div class="header">
+    <div id="timeNow" class="time">--:--</div>
+    <div class="city">🌱 AppleGarden · удалённо</div>
+    <div class="weather" id="weather">погода загружается...</div>
+    <div class="gear" id="gearBtn">⚙️</div>
+  </div>
+  <div class="status" id="status">подключение...</div>
+  <div class="next-run" id="nextRun">расписание не настроено</div>
+  <div class="system-viz" id="systemViz"><div class="viz-node pump"></div><div class="viz-line"></div><div class="viz-node tank"></div></div>
   <div class="times">
-    <div class="tbtn" data-min="5">5м</div>
-    <div class="tbtn" data-min="15">15м</div>
-    <div class="tbtn" data-min="30">30м</div>
-    <div class="tbtn active" data-min="0">∞</div>
+    <div class="time-btn" data-min="5">5м</div>
+    <div class="time-btn" data-min="15">15м</div>
+    <div class="time-btn" data-min="30">30м</div>
+    <div class="time-btn active" data-min="0">∞</div>
   </div>
-  <div class="sw"><span>Газон</span><div class="tog on" id="rain"></div></div>
-  <div class="sw"><span>Деревья (капельный)</span><div class="tog on" id="drip"></div></div>
-  <button class="btn start" id="mainBtn">СТАРТ</button>
-  <button class="btn fill" id="fillBtn">💧 Налить бочку</button>
-  <div class="muteRow"><span id="voiceState">🔊 голос включён</span></div>
-  <div class="log" id="log"></div>
+  <div class="switch"><span>Газон</span><div id="rain" class="toggle active"></div></div>
+  <div class="switch"><span>Деревья</span><div id="drip" class="toggle active"></div></div>
+  <button id="mainBtn" class="main-btn start">СТАРТ</button>
+  <div class="conn" id="conn"><span class="dot" id="dot2"></span>связь...</div>
 </div>
+
+<!-- РАЗРАБОТЧИК -->
+<div class="card" id="devScreen" style="display:none">
+  <div class="dev-back" id="backBtn">← Назад</div>
+  <div class="dev-title">⚙️ Режим разработчика</div>
+  <div class="dev-section">Расписание</div>
+  <div class="switch"><span>Полив по расписанию</span><div id="schOn" class="toggle"></div></div>
+  <div class="sched-days" id="schDays">
+    <button data-day="1">ПН</button><button data-day="2">ВТ</button><button data-day="3">СР</button><button data-day="4">ЧТ</button><button data-day="5">ПТ</button><button data-day="6">СБ</button><button data-day="0">ВС</button>
+  </div>
+  <div class="sched-grid">
+    <div class="field"><label>Время</label><input type="time" id="schTime" value="07:00"></div>
+    <div class="field"><label>Минуты</label><input type="number" id="schDur" min="1" max="240" value="15"></div>
+  </div>
+  <button class="save-btn" id="schSaveBtn">Сохранить расписание</button>
+  <div class="wifi-status" id="schStatus">—</div>
+  <div class="dev-section">Реле (ручной тест)</div>
+  <div class="dev-btn" id="d_relay" data-target="relay"><div><div class="name">Насос</div><div class="pin">GPIO 4</div></div><div class="state" id="ds_relay">OFF</div></div>
+  <div class="dev-btn" id="d_rain" data-target="rain"><div><div class="name">Клапан Газон</div><div class="pin">GPIO 5</div></div><div class="state" id="ds_rain">OFF</div></div>
+  <div class="dev-btn" id="d_drip" data-target="drip"><div><div class="name">Клапан Деревья</div><div class="pin">GPIO 6</div></div><div class="state" id="ds_drip">OFF</div></div>
+  <div class="dev-btn" id="d_fill" data-target="fill"><div><div class="name">Клапан налива</div><div class="pin">GPIO 7</div></div><div class="state" id="ds_fill">OFF</div></div>
+  <div class="dev-section">Датчики уровня</div>
+  <div class="sensors">
+    <div class="sensor">НИЖНИЙ (GPIO15)<div class="v" id="sLow">—</div></div>
+    <div class="sensor">ВЕРХНИЙ (GPIO16)<div class="v" id="sFull">—</div></div>
+  </div>
+  <div class="switch"><span>Датчик влажности <small>GPIO 1</small></span><div id="soilOn" class="toggle"></div></div>
+  <div class="moisture-box" id="soilBox">
+    <div><b>Влажность почвы</b><span>ADC GPIO1, порог 1800</span></div>
+    <div class="v" id="soilVal">—</div>
+  </div>
+  <div class="dev-section">Автоматика</div>
+  <div class="switch"><span>Блокировать полив при дожде</span><div id="rainBlock" class="toggle"></div></div>
+  <div class="dev-section">Погода <button id="wxRefreshBtn" class="refresh-btn">⟳ обновить</button></div>
+  <div class="wifi-status" id="wxStatus">—</div>
+  <div class="dev-section">Связь</div>
+  <div class="wifi-status" id="wifiSt">—</div>
+  <div class="dev-section">События (голос)</div>
+  <div id="log"></div>
 </div>
 
 <script>
-// ===== НАСТРОЙКИ (совпадают с прошивкой) =====
-var BROKER = 'wss://broker.emqx.io:8084/mqtt';
-var T_STAT  = 'simalee_garden_a7/status';
-var T_CMD   = 'simalee_garden_a7/cmd';
-var T_EVENT = 'simalee_garden_a7/event';
+var BROKER='wss://broker.emqx.io:8084/mqtt';
+var T_STAT='simalee_garden_a7/status', T_CMD='simalee_garden_a7/cmd', T_EVENT='simalee_garden_a7/event';
+var $=function(id){return document.getElementById(id);};
+var PIN='', selectedTime=0, running=false, schDaysMask=0, schDirty=false;
+var voiceUnlocked=false, lastState='', brokerOk=false;
 
-var $ = function(id){ return document.getElementById(id); };
-var selMin = 0, running = false, voiceOn = true, voiceUnlocked = false;
-var PIN = '';
+/* ---- часы ---- */
+setInterval(function(){ $('timeNow').innerText=new Date().toLocaleTimeString('ru-RU',{hour:'2-digit',minute:'2-digit'}); },1000);
 
-function logLine(s){ var l=$('log'); l.innerHTML += '> '+s+'<br>'; l.scrollTop=l.scrollHeight; }
+/* ---- голос ---- */
+function speak(t){ try{ if(!('speechSynthesis' in window)||!t)return; var u=new SpeechSynthesisUtterance(t); u.lang='ru-RU'; window.speechSynthesis.cancel(); window.speechSynthesis.speak(u);}catch(e){} }
+function unlockVoice(){ if(voiceUnlocked)return; voiceUnlocked=true; try{var w=new SpeechSynthesisUtterance(' ');w.volume=0;window.speechSynthesis.speak(w);}catch(e){} }
 
-function speak(text){
-  if (!voiceOn || !text) return;
-  try {
-    if (!('speechSynthesis' in window)) return;
-    var u = new SpeechSynthesisUtterance(text);
-    u.lang='ru-RU'; u.rate=1; u.pitch=1; u.volume=1;
-    window.speechSynthesis.cancel(); window.speechSynthesis.speak(u);
-  } catch(e){}
-}
-function unlockVoice(){
-  if (voiceUnlocked) return; voiceUnlocked = true;
-  try { var w=new SpeechSynthesisUtterance(' '); w.volume=0; window.speechSynthesis.speak(w); } catch(e){}
-}
+/* ---- лёгкий звук тапа ---- */
+var actx=null;
+function tone(f,d){ try{ actx=actx||new(window.AudioContext||window.webkitAudioContext)(); if(actx.state==='suspended')actx.resume(); var o=actx.createOscillator(),g=actx.createGain(),t=actx.currentTime; o.type='triangle';o.frequency.value=f;g.gain.setValueAtTime(.0001,t);g.gain.exponentialRampToValueAtTime(.04,t+.01);g.gain.exponentialRampToValueAtTime(.0001,t+d);o.connect(g);g.connect(actx.destination);o.start(t);o.stop(t+d+.02);}catch(e){} }
+function tap(){ tone(880,.05); }
 
-// ===== ВХОД =====
-function showApp(){ $('login').style.display='none'; $('app').style.display='block'; }
-function doLogin(p){ PIN = p; try{ localStorage.setItem('gardenpin', p); }catch(e){} unlockVoice(); showApp(); }
-$('loginBtn').onclick = function(){
-  var v = $('pinInput').value.trim();
-  if (v.length < 1){ $('loginErr').innerText='Введите PIN'; return; }
-  $('loginErr').innerText=''; doLogin(v);
-};
-$('pinInput').addEventListener('keydown', function(e){ if(e.key==='Enter') $('loginBtn').click(); });
-$('exitBtn').onclick = function(){ try{ localStorage.removeItem('gardenpin'); }catch(e){} location.reload(); };
-(function(){ var saved=''; try{ saved=localStorage.getItem('gardenpin')||''; }catch(e){} if(saved){ PIN=saved; showApp(); } })();
+/* ---- экраны ---- */
+function showLogin(){ $('loginScreen').style.display='block';$('mainScreen').style.display='none';$('devScreen').style.display='none'; }
+function showMain(){ $('loginScreen').style.display='none';$('mainScreen').style.display='block';$('devScreen').style.display='none'; pub({a:'devmode',on:0}); }
+function showDev(){ $('loginScreen').style.display='none';$('mainScreen').style.display='none';$('devScreen').style.display='block'; schDirty=false; pub({a:'devmode',on:1}); }
 
-// ===== MQTT =====
-var cid = 'gardenui-' + Math.random().toString(16).slice(2);
-var client = mqtt.connect(BROKER, {clientId:cid, keepalive:30, reconnectPeriod:3000});
+/* ---- вход ---- */
+function doLogin(p){ PIN=p; try{localStorage.setItem('gardenpin',p);}catch(e){} unlockVoice(); showMain(); }
+$('loginBtn').onclick=function(){ var v=$('pinInput').value.trim(); if(!v){$('loginErr').innerText='Введите PIN';return;} $('loginErr').innerText=''; doLogin(v); };
+$('pinInput').addEventListener('keydown',function(e){ if(e.key==='Enter')$('loginBtn').click(); });
 
-client.on('connect', function(){
-  $('conn').className='conn ok'; $('connTxt').innerText='на связи (через интернет)';
-  client.subscribe(T_STAT); client.subscribe(T_EVENT);
-  logLine('подключено к брокеру');
+/* ---- MQTT ---- */
+var cid='gardenui-'+Math.random().toString(16).slice(2);
+var client=mqtt.connect(BROKER,{clientId:cid,keepalive:30,reconnectPeriod:3000});
+function setDot(ok,txt){ brokerOk=ok; var d1=$('dot'),d2=$('dot2'); if(d1)d1.className='dot'+(ok?' ok':''); if(d2)d2.className='dot'+(ok?' ok':''); var c=$('connTxt'); if(c)c.innerHTML='<span class="dot'+(ok?' ok':'')+'"></span>'+txt; var cc=$('conn'); if(cc)cc.innerHTML='<span class="dot'+(ok?' ok':'')+'"></span>'+txt; }
+client.on('connect',function(){ setDot(true,'на связи (интернет)'); client.subscribe(T_STAT); client.subscribe(T_EVENT); });
+client.on('reconnect',function(){ setDot(false,'переподключение…'); });
+client.on('close',function(){ setDot(false,'нет связи с брокером'); });
+client.on('error',function(e){ logLine('ошибка: '+e); });
+client.on('message',function(topic,payload){
+  var msg=payload.toString();
+  if(topic===T_EVENT){ try{var e=JSON.parse(msg); if(e.event){logLine('🔊 '+e.event); speak(e.event);}}catch(_){} return; }
+  if(topic===T_STAT){ try{ render(JSON.parse(msg)); }catch(_){} }
 });
-client.on('reconnect', function(){ $('conn').className='conn'; $('connTxt').innerText='переподключение…'; });
-client.on('close',     function(){ $('conn').className='conn'; $('connTxt').innerText='нет связи с брокером'; });
-client.on('error',     function(e){ logLine('ошибка: '+e); });
+function pub(o){ o.pin=PIN; if(client.connected) client.publish(T_CMD,JSON.stringify(o)); }
+function logLine(s){ var l=$('log'); if(!l)return; l.innerHTML+='> '+s+'<br>'; l.scrollTop=l.scrollHeight; }
 
-client.on('message', function(topic, payload){
-  var msg = payload.toString();
-  if (topic === T_EVENT){
-    try { var e=JSON.parse(msg); if(e.event){ logLine('🔊 '+e.event); speak(e.event); } } catch(_){}
-    return;
-  }
-  if (topic === T_STAT){
-    var d; try { d=JSON.parse(msg); } catch(_){ return; }
-    var st=$('state'), sub=$('sub2');
-    running = !!d.running;
-    if (d.lowWater && !d.filling){ st.className='state low'; st.innerText='⚠ НЕТ ВОДЫ'; sub.innerText='бак пуст'; }
-    else if (d.filling){ st.className='state fill'; st.innerText='💧 НАЛИВ БОЧКИ'; sub.innerText='идёт набор воды'; }
-    else if (d.running){ st.className='state run'; st.innerText='ПОЛИВ ИДЁТ'; sub.innerText=(d.drip?'газон + деревья':'газон'); }
-    else { st.className='state idle'; st.innerText='СИСТЕМА ГОТОВА'; sub.innerText='ожидание команды'; }
-    $('mainBtn').innerText = running ? 'СТОП' : 'СТАРТ';
-    $('mainBtn').className = 'btn ' + (running ? 'stop' : 'start');
-    $('mTank').innerText = d.tankFull ? 'полна' : (d.lowWater ? 'пусто' : 'ок');
-    var rem = d.remaining||0;
-    $('mRem').innerText = running ? (rem>0 ? Math.floor(rem/60)+':'+('0'+(rem%60)).slice(-2) : '∞') : '—';
-    $('mTemp').innerText = (d.temp!==undefined) ? (Math.round(d.temp)+'°C') : '—';
-    $('mIp').innerText = d.ip || '—';
-  }
-});
+/* ---- отрисовка статуса ---- */
+function render(d){
+  running=d.running;
+  var st=$('status'),btn=$('mainBtn'),viz=$('systemViz');
+  if(d.lowWater && !d.filling){ viz.className='system-viz state-low'; st.innerText='⚠ НЕТ ВОДЫ В БАКЕ'; st.style.color='#d9534f'; }
+  else if(d.rainBlocked){ viz.className='system-viz'; st.innerText='🌧 ЗАБЛОКИРОВАНО (дождь)'; st.style.color='#0d8'; }
+  else if(d.filling){ viz.className='system-viz state-filling'; st.innerText='💧 НАЛИВ БАКА...'; st.style.color='#0bb'; }
+  else if(d.running){ viz.className='system-viz state-running'; var m=Math.floor(d.remaining/60),s=d.remaining%60; st.innerText='ИДЁТ ПОЛИВ '+(d.remaining>0?('('+m+':'+(s<10?'0':'')+s+')'):'∞'); st.style.color='#168f8b'; }
+  else { viz.className='system-viz'; st.innerText='СИСТЕМА ГОТОВА'; st.style.color='#5b666b'; }
+  btn.innerText=running?'СТОП':'СТАРТ'; btn.className='main-btn '+(running?'stop':'start');
+  if(d.schedule){ $('nextRun').innerText=d.schedule.nextText||'расписание не настроено'; if(!schDirty) setSchedule(d.schedule); }
+  /* реле */
+  var k=['relay','rain','drip','fill'];
+  for(var i=0;i<k.length;i++){ var on=d.dev&&d.dev[k[i]]; var el=$('d_'+k[i]),s2=$('ds_'+k[i]); if(el)el.classList.toggle('on',!!on); if(s2)s2.innerText=on?'ON':'OFF'; }
+  /* датчики */
+  var sl=$('sLow'),sf=$('sFull');
+  if(sl){ sl.innerText=d.sensorLow?'ПУСТО':'OK'; sl.className='v '+(d.sensorLow?'bad':'ok'); }
+  if(sf){ sf.innerText=d.sensorFull?'ПОЛНЫЙ':'—'; sf.className='v '+(d.sensorFull?'ok':''); }
+  if($('rainBlock')) $('rainBlock').classList.toggle('active',!!d.blockOnRain);
+  if(d.soil){ $('soilOn').classList.toggle('active',!!d.soil.enabled); $('soilVal').innerText=d.soil.enabled?((d.soil.wet?'ВЛАЖНО':'СУХО')+' · '+d.soil.raw):'выкл'; }
+  /* погода */
+  var w=$('weather'),wx=$('wxStatus');
+  if(d.weather&&d.weather.valid){ w.innerHTML=(d.weather.icon||'🌤')+' <span class="t">'+d.weather.temp+'°C</span> · '+d.weather.desc+' · 💨 '+d.weather.wind+' м/с'; if(wx){wx.innerText='✓ '+d.weather.temp+'°C, '+d.weather.desc; wx.className='wifi-status ok';} }
+  else if(d.weather){ w.innerHTML='🌐 '+(d.weather.error||'нет данных'); if(wx){wx.innerText='✗ '+(d.weather.error||'нет данных'); wx.className='wifi-status bad';} }
+  /* связь */
+  if($('wifiSt')) $('wifiSt').innerText='Брокер: '+(brokerOk?'✓ онлайн':'✗')+'\nIP платы дома: '+(d.ip||'—');
+}
 
-function pub(obj){ obj.pin = PIN; client.publish(T_CMD, JSON.stringify(obj)); }
+/* ---- расписание UI ---- */
+var schDayBtns=document.querySelectorAll('#schDays button');
+function setSchedule(s){
+  if(!s)return;
+  $('schOn').classList.toggle('active',!!s.enabled);
+  schDaysMask=s.days||0;
+  for(var i=0;i<schDayBtns.length;i++){ var bit=1<<parseInt(schDayBtns[i].getAttribute('data-day')); schDayBtns[i].classList.toggle('on',!!(schDaysMask&bit)); }
+  $('schTime').value=(s.hour<10?'0':'')+s.hour+':'+(s.minute<10?'0':'')+s.minute;
+  $('schDur').value=s.duration||15;
+  $('schStatus').innerText=s.nextText||'—';
+}
+for(var sd=0;sd<schDayBtns.length;sd++){ (function(b){ b.onclick=function(){ tap();schDirty=true; var bit=1<<parseInt(b.getAttribute('data-day')); schDaysMask^=bit; b.classList.toggle('on',!!(schDaysMask&bit)); }; })(schDayBtns[sd]); }
+$('schOn').onclick=function(){ tap();schDirty=true; this.classList.toggle('active'); };
+$('schTime').oninput=function(){schDirty=true;}; $('schDur').oninput=function(){schDirty=true;};
+$('schSaveBtn').onclick=function(){ tap(); var p=$('schTime').value.split(':'); if(!schDaysMask){$('schStatus').innerText='Выберите дни недели';return;}
+  pub({a:'sched',en:$('schOn').classList.contains('active')?1:0,days:schDaysMask,h:parseInt(p[0]||'7'),m:parseInt(p[1]||'0'),dur:parseInt($('schDur').value||'15'),r:$('rain').classList.contains('active')?1:0,d:$('drip').classList.contains('active')?1:0});
+  schDirty=false; $('schStatus').innerText='Сохранено'; };
 
-// ===== управление =====
-var tbtns = document.querySelectorAll('.tbtn');
-for (var i=0;i<tbtns.length;i++){ (function(b){ b.onclick=function(){ unlockVoice();
-  for(var j=0;j<tbtns.length;j++) tbtns[j].classList.remove('active');
-  b.classList.add('active'); selMin=parseInt(b.getAttribute('data-min')); }; })(tbtns[i]); }
+/* ---- кнопки главного ---- */
+$('rain').onclick=function(){ unlockVoice();tap(); this.classList.toggle('active'); };
+$('drip').onclick=function(){ unlockVoice();tap(); this.classList.toggle('active'); };
+var tb=document.querySelectorAll('.time-btn');
+for(var i=0;i<tb.length;i++){ (function(b){ b.onclick=function(){ unlockVoice();tap(); for(var j=0;j<tb.length;j++)tb[j].classList.remove('active'); b.classList.add('active'); selectedTime=parseInt(b.getAttribute('data-min')); }; })(tb[i]); }
+$('mainBtn').onclick=function(){ unlockVoice();tap(); if(running)pub({a:'stop'}); else pub({a:'start',t:selectedTime,r:$('rain').classList.contains('active')?1:0,d:$('drip').classList.contains('active')?1:0}); };
+$('gearBtn').onclick=function(){ unlockVoice();tap(); showDev(); };
+$('backBtn').onclick=function(){ tap(); showMain(); };
 
-$('rain').onclick = function(){ unlockVoice(); this.classList.toggle('on'); };
-$('drip').onclick = function(){ unlockVoice(); this.classList.toggle('on'); };
+/* ---- дев-кнопки ---- */
+['d_relay','d_rain','d_drip','d_fill'].forEach(function(id){ $(id).onclick=function(){ tap(); pub({a:'devset',target:$(id).getAttribute('data-target')}); }; });
+$('rainBlock').onclick=function(){ tap(); pub({a:'rainblock'}); };
+$('soilOn').onclick=function(){ tap(); pub({a:'soil'}); };
+$('wxRefreshBtn').onclick=function(){ tap(); $('wxStatus').innerText='обновление...'; pub({a:'weather'}); };
 
-$('mainBtn').onclick = function(){
-  unlockVoice();
-  if (running){ pub({a:'stop'}); }
-  else { pub({a:'start', t:selMin, r:$('rain').classList.contains('on')?1:0, d:$('drip').classList.contains('on')?1:0}); }
-};
-$('fillBtn').onclick = function(){ unlockVoice(); pub({a:'fill'}); logLine('команда: налить бочку'); };
+/* ---- автологин ---- */
+(function(){ var s=''; try{s=localStorage.getItem('gardenpin')||'';}catch(e){} if(s){PIN=s;showMain();} else showLogin(); })();
 </script>
-</body>
-</html>
+</body></html>
