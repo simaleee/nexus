@@ -150,6 +150,8 @@ body:before{content:'';position:fixed;inset:0;background:linear-gradient(90deg,t
     <div class="sensor">НИЖНИЙ (GPIO15)<div class="v" id="sLow">—</div><div id="rLow" style="font-size:10px;color:var(--muted);margin-top:4px">контакт: —</div></div>
     <div class="sensor">ВЕРХНИЙ (GPIO16)<div class="v" id="sFull">—</div><div id="rFull" style="font-size:10px;color:var(--muted);margin-top:4px">контакт: —</div></div>
   </div>
+  <div class="switch"><span>Инвертировать нижний <small>если «пусто» наоборот</small></span><div id="invLow" class="toggle"></div></div>
+  <div class="switch"><span>Инвертировать верхний <small>если «полно» наоборот</small></span><div id="invFull" class="toggle"></div></div>
   <div class="switch"><span>Датчик влажности <small>GPIO 1</small></span><div id="soilOn" class="toggle"></div></div>
   <div class="moisture-box" id="soilBox">
     <div><b>Влажность почвы</b><span>ADC GPIO1, порог 1800</span></div>
@@ -231,6 +233,8 @@ function render(d){
   if($('rLow'))  $('rLow').innerText='контакт: '+(d.rawLow?'замкнут (LOW)':'разомкнут (HIGH)');
   if($('rFull')) $('rFull').innerText='контакт: '+(d.rawFull?'замкнут (LOW)':'разомкнут (HIGH)');
   if($('rainBlock')) $('rainBlock').classList.toggle('active',!!d.blockOnRain);
+  if($('invLow'))  $('invLow').classList.toggle('active',!!d.invLow);
+  if($('invFull')) $('invFull').classList.toggle('active',!!d.invFull);
   if(d.soil){ $('soilOn').classList.toggle('active',!!d.soil.enabled); $('soilVal').innerText=d.soil.enabled?((d.soil.wet?'ВЛАЖНО':'СУХО')+' · '+d.soil.raw):'выкл'; }
   /* погода */
   var w=$('weather'),wx=$('wxStatus');
@@ -271,6 +275,8 @@ $('backBtn').onclick=function(){ tap(); showMain(); };
 ['d_relay','d_rain','d_drip','d_fill'].forEach(function(id){ $(id).onclick=function(){ tap(); pub({a:'devset',target:$(id).getAttribute('data-target')}); }; });
 $('rainBlock').onclick=function(){ tap(); pub({a:'rainblock'}); };
 $('soilOn').onclick=function(){ tap(); pub({a:'soil'}); };
+$('invLow').onclick=function(){ tap(); pub({a:'invlow'}); };
+$('invFull').onclick=function(){ tap(); pub({a:'invfull'}); };
 $('wxRefreshBtn').onclick=function(){ tap(); $('wxStatus').innerText='обновление...'; pub({a:'weather'}); };
 
 /* ---- автологин ---- */
