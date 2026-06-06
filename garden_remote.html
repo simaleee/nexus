@@ -1,0 +1,182 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1">
+<title>🌱 Сад — пульт</title>
+<script src="https://unpkg.com/mqtt/dist/mqtt.min.js"></script>
+<style>
+:root{--bg:#0e1512;--card:#16201c;--ink:#e9fff6;--muted:#8fb3a6;--cyan:#18c7bf;--mint:#83e8cb;--red:#e86666;--amber:#ffc66d;--line:rgba(120,200,180,.16)}
+*{box-sizing:border-box;-webkit-tap-highlight-color:transparent}
+body{font-family:system-ui,-apple-system,Segoe UI,Roboto,sans-serif;background:radial-gradient(circle at 20% 0%,rgba(24,199,191,.12),transparent 40%),var(--bg);color:var(--ink);margin:0;padding:16px;max-width:440px;margin:auto;min-height:100vh}
+h1{font-size:20px;text-align:center;margin:6px 0 2px;letter-spacing:.5px}
+.sub{text-align:center;color:var(--muted);font-size:12px;margin-bottom:14px}
+.conn{display:inline-block;width:9px;height:9px;border-radius:50%;background:var(--red);margin-right:6px;vertical-align:middle}
+.conn.ok{background:var(--mint);box-shadow:0 0 10px var(--mint)}
+.card{background:linear-gradient(160deg,var(--card),#101815);border:1px solid var(--line);border-radius:20px;padding:18px;margin:12px 0;box-shadow:0 12px 30px rgba(0,0,0,.35)}
+.state{font-size:24px;font-weight:800;text-align:center;color:var(--mint)}
+.state.run{color:var(--mint)}.state.fill{color:var(--cyan)}.state.low{color:var(--red)}.state.idle{color:var(--ink)}
+.sub2{text-align:center;color:var(--muted);font-size:13px;margin-top:6px;min-height:18px}
+.grid{display:grid;grid-template-columns:repeat(2,1fr);gap:10px;margin-top:10px}
+.metric{background:rgba(255,255,255,.03);border:1px solid var(--line);border-radius:14px;padding:10px;text-align:center}
+.metric .l{font-size:11px;color:var(--muted)}.metric .v{font-size:16px;font-weight:700;margin-top:3px}
+.times{display:grid;grid-template-columns:repeat(4,1fr);gap:8px;margin:8px 0}
+.tbtn{height:50px;border-radius:14px;background:rgba(255,255,255,.05);border:1px solid var(--line);color:var(--ink);font-size:18px;font-weight:800;cursor:pointer}
+.tbtn.active{background:linear-gradient(145deg,var(--cyan),var(--mint));color:#062019;border:0}
+.sw{display:flex;justify-content:space-between;align-items:center;padding:12px 4px;font-size:16px}
+.tog{width:60px;height:32px;border-radius:10px;background:#26312c;border:1px solid var(--line);position:relative;cursor:pointer;transition:.2s}
+.tog.on{background:linear-gradient(135deg,var(--cyan),var(--mint))}
+.tog::after{content:'';position:absolute;width:24px;height:24px;border-radius:8px;background:#cfe;top:3px;left:4px;transition:.2s}
+.tog.on::after{left:32px}
+.btn{width:100%;height:64px;border:0;border-radius:18px;font-size:20px;font-weight:900;cursor:pointer;margin-top:8px;color:#062019}
+.start{background:linear-gradient(135deg,var(--cyan),var(--mint))}
+.stop{background:linear-gradient(135deg,#ff7a62,var(--red));color:#fff}
+.fill{background:linear-gradient(135deg,var(--amber),#f29b45);color:#3a2400;height:52px;font-size:17px}
+.btn:active,.tbtn:active,.fill:active{transform:scale(.98)}
+.log{font-family:monospace;font-size:11px;color:var(--muted);background:rgba(0,0,0,.3);border-radius:12px;padding:10px;height:90px;overflow-y:auto;margin-top:8px}
+.muteRow{display:flex;align-items:center;gap:8px;justify-content:center;color:var(--muted);font-size:13px;margin-top:6px}
+.pin{width:100%;padding:16px;font-size:26px;text-align:center;letter-spacing:8px;background:rgba(255,255,255,.05);border:1px solid var(--line);border-radius:14px;color:var(--ink);outline:none}
+.lbtn{width:100%;height:54px;border:0;border-radius:14px;font-size:17px;font-weight:800;margin-top:12px;color:#062019;background:linear-gradient(135deg,var(--cyan),var(--mint));cursor:pointer}
+.err{color:var(--red);text-align:center;font-size:13px;min-height:18px;margin-top:8px}
+.exit{float:right;font-size:12px;color:var(--muted);cursor:pointer}
+</style>
+</head>
+<body>
+<h1>🌱 Сад — удалённый пульт</h1>
+<div class="sub"><span class="conn" id="conn"></span><span id="connTxt">подключение к брокеру…</span></div>
+
+<!-- ЭКРАН ВХОДА -->
+<div class="card" id="login">
+  <div style="text-align:center;font-weight:800;font-size:18px;margin-bottom:4px">🔒 Вход</div>
+  <div style="text-align:center;color:var(--muted);font-size:12px;margin-bottom:14px">введите PIN управления</div>
+  <input class="pin" id="pinInput" type="password" inputmode="numeric" maxlength="8" placeholder="••••">
+  <button class="lbtn" id="loginBtn">ВОЙТИ</button>
+  <div class="err" id="loginErr"></div>
+</div>
+
+<!-- ОСНОВНОЙ ПУЛЬТ -->
+<div id="app" style="display:none">
+<div class="card">
+  <div class="exit" id="exitBtn">выйти</div>
+  <div class="state idle" id="state">—</div>
+  <div class="sub2" id="sub2">ожидание данных…</div>
+  <div class="grid">
+    <div class="metric"><div class="l">Бочка</div><div class="v" id="mTank">—</div></div>
+    <div class="metric"><div class="l">Осталось</div><div class="v" id="mRem">—</div></div>
+    <div class="metric"><div class="l">Погода</div><div class="v" id="mTemp">—</div></div>
+    <div class="metric"><div class="l">IP в доме</div><div class="v" id="mIp" style="font-size:13px">—</div></div>
+  </div>
+</div>
+
+<div class="card">
+  <div class="times">
+    <div class="tbtn" data-min="5">5м</div>
+    <div class="tbtn" data-min="15">15м</div>
+    <div class="tbtn" data-min="30">30м</div>
+    <div class="tbtn active" data-min="0">∞</div>
+  </div>
+  <div class="sw"><span>Газон</span><div class="tog on" id="rain"></div></div>
+  <div class="sw"><span>Деревья (капельный)</span><div class="tog on" id="drip"></div></div>
+  <button class="btn start" id="mainBtn">СТАРТ</button>
+  <button class="btn fill" id="fillBtn">💧 Налить бочку</button>
+  <div class="muteRow"><span id="voiceState">🔊 голос включён</span></div>
+  <div class="log" id="log"></div>
+</div>
+</div>
+
+<script>
+// ===== НАСТРОЙКИ (совпадают с прошивкой) =====
+var BROKER = 'wss://broker.emqx.io:8084/mqtt';
+var T_STAT  = 'simalee_garden_a7/status';
+var T_CMD   = 'simalee_garden_a7/cmd';
+var T_EVENT = 'simalee_garden_a7/event';
+
+var $ = function(id){ return document.getElementById(id); };
+var selMin = 0, running = false, voiceOn = true, voiceUnlocked = false;
+var PIN = '';
+
+function logLine(s){ var l=$('log'); l.innerHTML += '> '+s+'<br>'; l.scrollTop=l.scrollHeight; }
+
+function speak(text){
+  if (!voiceOn || !text) return;
+  try {
+    if (!('speechSynthesis' in window)) return;
+    var u = new SpeechSynthesisUtterance(text);
+    u.lang='ru-RU'; u.rate=1; u.pitch=1; u.volume=1;
+    window.speechSynthesis.cancel(); window.speechSynthesis.speak(u);
+  } catch(e){}
+}
+function unlockVoice(){
+  if (voiceUnlocked) return; voiceUnlocked = true;
+  try { var w=new SpeechSynthesisUtterance(' '); w.volume=0; window.speechSynthesis.speak(w); } catch(e){}
+}
+
+// ===== ВХОД =====
+function showApp(){ $('login').style.display='none'; $('app').style.display='block'; }
+function doLogin(p){ PIN = p; try{ localStorage.setItem('gardenpin', p); }catch(e){} unlockVoice(); showApp(); }
+$('loginBtn').onclick = function(){
+  var v = $('pinInput').value.trim();
+  if (v.length < 1){ $('loginErr').innerText='Введите PIN'; return; }
+  $('loginErr').innerText=''; doLogin(v);
+};
+$('pinInput').addEventListener('keydown', function(e){ if(e.key==='Enter') $('loginBtn').click(); });
+$('exitBtn').onclick = function(){ try{ localStorage.removeItem('gardenpin'); }catch(e){} location.reload(); };
+(function(){ var saved=''; try{ saved=localStorage.getItem('gardenpin')||''; }catch(e){} if(saved){ PIN=saved; showApp(); } })();
+
+// ===== MQTT =====
+var cid = 'gardenui-' + Math.random().toString(16).slice(2);
+var client = mqtt.connect(BROKER, {clientId:cid, keepalive:30, reconnectPeriod:3000});
+
+client.on('connect', function(){
+  $('conn').className='conn ok'; $('connTxt').innerText='на связи (через интернет)';
+  client.subscribe(T_STAT); client.subscribe(T_EVENT);
+  logLine('подключено к брокеру');
+});
+client.on('reconnect', function(){ $('conn').className='conn'; $('connTxt').innerText='переподключение…'; });
+client.on('close',     function(){ $('conn').className='conn'; $('connTxt').innerText='нет связи с брокером'; });
+client.on('error',     function(e){ logLine('ошибка: '+e); });
+
+client.on('message', function(topic, payload){
+  var msg = payload.toString();
+  if (topic === T_EVENT){
+    try { var e=JSON.parse(msg); if(e.event){ logLine('🔊 '+e.event); speak(e.event); } } catch(_){}
+    return;
+  }
+  if (topic === T_STAT){
+    var d; try { d=JSON.parse(msg); } catch(_){ return; }
+    var st=$('state'), sub=$('sub2');
+    running = !!d.running;
+    if (d.lowWater && !d.filling){ st.className='state low'; st.innerText='⚠ НЕТ ВОДЫ'; sub.innerText='бак пуст'; }
+    else if (d.filling){ st.className='state fill'; st.innerText='💧 НАЛИВ БОЧКИ'; sub.innerText='идёт набор воды'; }
+    else if (d.running){ st.className='state run'; st.innerText='ПОЛИВ ИДЁТ'; sub.innerText=(d.drip?'газон + деревья':'газон'); }
+    else { st.className='state idle'; st.innerText='СИСТЕМА ГОТОВА'; sub.innerText='ожидание команды'; }
+    $('mainBtn').innerText = running ? 'СТОП' : 'СТАРТ';
+    $('mainBtn').className = 'btn ' + (running ? 'stop' : 'start');
+    $('mTank').innerText = d.tankFull ? 'полна' : (d.lowWater ? 'пусто' : 'ок');
+    var rem = d.remaining||0;
+    $('mRem').innerText = running ? (rem>0 ? Math.floor(rem/60)+':'+('0'+(rem%60)).slice(-2) : '∞') : '—';
+    $('mTemp').innerText = (d.temp!==undefined) ? (Math.round(d.temp)+'°C') : '—';
+    $('mIp').innerText = d.ip || '—';
+  }
+});
+
+function pub(obj){ obj.pin = PIN; client.publish(T_CMD, JSON.stringify(obj)); }
+
+// ===== управление =====
+var tbtns = document.querySelectorAll('.tbtn');
+for (var i=0;i<tbtns.length;i++){ (function(b){ b.onclick=function(){ unlockVoice();
+  for(var j=0;j<tbtns.length;j++) tbtns[j].classList.remove('active');
+  b.classList.add('active'); selMin=parseInt(b.getAttribute('data-min')); }; })(tbtns[i]); }
+
+$('rain').onclick = function(){ unlockVoice(); this.classList.toggle('on'); };
+$('drip').onclick = function(){ unlockVoice(); this.classList.toggle('on'); };
+
+$('mainBtn').onclick = function(){
+  unlockVoice();
+  if (running){ pub({a:'stop'}); }
+  else { pub({a:'start', t:selMin, r:$('rain').classList.contains('on')?1:0, d:$('drip').classList.contains('on')?1:0}); }
+};
+$('fillBtn').onclick = function(){ unlockVoice(); pub({a:'fill'}); logLine('команда: налить бочку'); };
+</script>
+</body>
+</html>
